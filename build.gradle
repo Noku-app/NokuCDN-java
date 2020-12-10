@@ -1,0 +1,16 @@
+plugins {
+    id 'java'
+}
+
+group 'com.noku'
+version '0.0.1 Pre-Alpha'
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
+dependencies {
+    implementation group: 'com.noku.base', name: 'Nokubase-java', version: '0.0.1-PREALPHA'
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
