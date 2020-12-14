@@ -1,0 +1,11 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="NokuCDN-java.main:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/NokuCDN</output-path>
+    <root id="archive" name="NokuCDN-java.main.jar">
+      <element id="module-output" name="NokuCDN-java.main" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/mysql/mysql-connector-java/8.0.22/ec8bfce16c8bd18d6cb598b1147aa145be1408f/mysql-connector-java-8.0.22.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/com/noku/base/Nokubase-java/0.0.1-PREALPHA/Nokubase-java-0.0.1-PREALPHA.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.google.protobuf/protobuf-java/3.11.4/7ec0925cc3aef0335bbc7d57edfd42b0f86f8267/protobuf-java-3.11.4.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
