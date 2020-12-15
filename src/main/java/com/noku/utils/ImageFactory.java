@@ -34,6 +34,14 @@ public final class ImageFactory {
         return Base64.encode(compressed);
     }
     
+    public byte[] compress(byte[] data){
+        return compressor.compress(data);
+    }
+    
+    public byte[] decompress(byte[] data){
+        return compressor.decompress(data);
+    }
+    
     public byte[] fromBase64(byte[] base64Bytes){
         byte[] decoded = Base64.decode(base64Bytes);
         return compressor.decompress(decoded);

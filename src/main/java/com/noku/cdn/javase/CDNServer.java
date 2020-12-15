@@ -1,11 +1,13 @@
 package com.noku.cdn.javase;
 
 
+import com.noku.base.ColumnValuePair;
 import com.noku.base.Condition;
 import com.noku.base.javase.NokuBase;
 import com.noku.base.javase.NokuResult;
 import com.noku.utils.Base64;
 import com.noku.utils.ImageFactory;
+import com.noku.utils.SHA256;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpsConfigurator;
 import com.sun.net.httpserver.HttpsParameters;
@@ -15,6 +17,7 @@ import javax.net.ssl.*;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.KeyStore;
 import java.sql.ResultSet;
@@ -52,8 +55,8 @@ public final class CDNServer implements Runnable{
         "    `id` INT NOT NULL AUTO_INCREMENT ,\n" +
         "    `uid` INT NOT NULL ,\n" +
         "    `data` LONGTEXT NOT NULL ,\n" +
-        "    `hash` TINYTEXT NOT NULL ,\n" +
-        "    `link` TEXT NOT NULL ,\n" +
+        "    `hash` VARCHAR(64) NOT NULL ,\n" +
+        "    `mime_type` TEXT NOT NULL ,\n" +
         "    `creation_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ,\n" +
         "    PRIMARY KEY (`id`)\n" +
         ") ENGINE = InnoDB;");
@@ -149,29 +152,43 @@ public final class CDNServer implements Runnable{
             }
     
             if(data[0].equals("upload")){
-                respondForm(ex, "res/upload.html");
-                continue;
+                respondHTML(ex, "res/upload.html");
+            } else if(data[0].equals("post")){
+                if(request.method.equalsIgnoreCase("POST")){
+                    CDNRequest.MultiPart uid = request.getData("uid");
+                    CDNRequest.MultiPart file = request.getData("file");
+                    
+                    if(uid == null || file == null || file.bytes == null){
+                        respondHTML(ex, "res/error.nml", nl("message"), nl("Data not filled out."));
+                    } else {
+                        byte[] fileData = file.bytes;
+                        String contentType = file.contentType;
+                        byte[] fin = null;
+                        if(contentType.contains("image")){
+                            contentType = "image/jpg";
+                            fin = factory.toJpgByteArray(fileData, 0.7F);
+                        }
+                        if(fin == null) fin = fileData;
+                        
+                        String b64 = Base64.encodeToString(factory.compress(fin));
+                        byte[] hash = SHA256.hash(fin);
+                        String hex = SHA256.bytesToHex(hash);
+                        
+                        if(base.insert("cdn",
+                            ColumnValuePair.from("uid", uid.value),
+                            ColumnValuePair.from("data", b64),
+                            ColumnValuePair.from("hash", hex),
+                            ColumnValuePair.from("mime_type", contentType)
+                        )){
+                            respondHTML(ex, "res/done.nml", nl("title", "message"), nl("successful!", "Yr meme posted b, here is a link: <a href=\"/" + hex + "\">MEME</a>"));
+                        } else {
+                            respondHTML(ex, "res/done.nml", nl("title", "message"), nl("failed!", "Yr meme wack b"));
+                        }
+                    }
+                }
+            } else {
+                respondContent(ex, data);
             }
-    
-            if(data[0].equals("post")){
-                
-                respondForm(ex, "res/done.html");
-                continue;
-            }
-            
-            ResultSet set = null;
-    
-            long b = System.currentTimeMillis();
-            System.out.println("Time: 0");
-            //NokuResult res = base.select("cdn", new Condition("id", data[0]), "data");
-            Condition id = new Condition("id", data[0]);
-            System.out.println("Time: " + (System.currentTimeMillis() - b));
-            ResultSet res = base.queryRaw("SELECT data, link FROM cdn WHERE " + id.buildPrepared(), id.preparedValues());
-            System.out.println("Time: " + (System.currentTimeMillis() - b));
-            if(res.next()) respondImage(res, ex, b);
-            else respond404(ex);
-            System.out.println("Time: " + (System.currentTimeMillis() - b));
-    
     
             // Finished with request, cleaning up
             request.close();
@@ -183,15 +200,40 @@ public final class CDNServer implements Runnable{
         Thread.sleep(1000);
     }
     
-    private void respondForm(HttpExchange ex, String file) throws Exception{
+    private void respondContent(HttpExchange ex, String[] data) throws Exception{
+        ResultSet res;
+        long b = System.currentTimeMillis();
+        System.out.println("Time: 0");
+        //NokuResult res = base.select("cdn", new Condition("id", data[0]), "data");
+        Condition con = new Condition(data[0].length() == 64 ? "hash" : "id", data[0]);
+        System.out.println("Time: " + (System.currentTimeMillis() - b));
+        res = base.queryRaw("SELECT data, mime_type FROM cdn WHERE " + con.buildPrepared(), con.preparedValues());
+        System.out.println("Time: " + (System.currentTimeMillis() - b));
+        if(res.next()) respondImage(res, ex, b);
+        else respond404(ex);
+        System.out.println("Time: " + (System.currentTimeMillis() - b));
+    }
+    
+    private void respondHTML(HttpExchange ex, String file) throws Exception{
         byte[] resp = Files.readAllBytes(new File(file).toPath());
         ex.getResponseHeaders().add("Pragma", "public");
         ex.getResponseHeaders().add("Content-Type", "text/html");
         ex.sendResponseHeaders(200, resp.length);
         OutputStream os = ex.getResponseBody();
         os.write(resp);
-        os.close();
-        ex.close();
+    }
+    
+    private void respondHTML(HttpExchange ex, String file, String[] args, String[] values) throws Exception{
+        byte[] resp = Files.readAllBytes(new File(file).toPath());
+        String data = new String(resp, StandardCharsets.UTF_8);
+        for(int i = 0; i < args.length; i++) data = data.replace("{" + args[i] + "}", values[i]);
+        byte[] fin = data.getBytes(StandardCharsets.UTF_8);
+        
+        ex.getResponseHeaders().add("Pragma", "public");
+        ex.getResponseHeaders().add("Content-Type", "text/html");
+        ex.sendResponseHeaders(200, fin.length);
+        OutputStream os = ex.getResponseBody();
+        os.write(fin);
     }
     
     private void respondImage(ResultSet set, HttpExchange ex, long b) throws Exception {
@@ -203,7 +245,7 @@ public final class CDNServer implements Runnable{
         ex.getResponseHeaders().add("Pragma", "public");
         ex.getResponseHeaders().add("Cache-Control", "max-age=86400");
         ex.getResponseHeaders().add("Expires", instant.toString());
-        ex.getResponseHeaders().add("Content-Type", set.getString("link"));
+        ex.getResponseHeaders().add("Content-Type", set.getString("mime_type"));
         BufferedReader reader = new BufferedReader(set.getCharacterStream("data"));
         System.out.println("Time: " + (System.currentTimeMillis() - b));
     
@@ -222,5 +264,9 @@ public final class CDNServer implements Runnable{
     private void respond404(HttpExchange ex) throws IOException{
         ex.sendResponseHeaders(404, 0);
         ex.close();
+    }
+    
+    public static String[] nl(String... items){
+        return items;
     }
 }

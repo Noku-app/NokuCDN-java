@@ -4,14 +4,15 @@ import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 
 import java.io.*;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class CDNRequest {
     public final Map<String, Object> data = new HashMap<>();
-    public String url, requestBody, method;
+    public final String url, method;
     public final HttpExchange ex;
+    public final RequestType type;
+    private String requestBody;
     
     public CDNRequest(HttpExchange ex) throws IOException {
         this.ex = ex;
@@ -81,6 +82,7 @@ public class CDNRequest {
                             //extract text value
                             byte[] body = Arrays.copyOfRange(part, headerEnd + 4, part.length);
                             p.value = new String(body);
+                            p.bytes = body;
                         } else {
                             //must be a file upload
                             p.bytes = Arrays.copyOfRange(part, headerEnd + 4, part.length);
@@ -89,12 +91,12 @@ public class CDNRequest {
                     }
                 }
                 
-                this.requestBody = handle(ex, list);
+                this.type = handle(ex, list);
             } else {
-                this.requestBody = handle(ex, null);
+                this.type = handle(ex, null);
             }
         } else {
-            this.requestBody = handle(ex, null);
+            this.type = handle(ex, null);
         }
         
         String temp = ex.getRequestURI().toString();
@@ -104,32 +106,35 @@ public class CDNRequest {
         this.method = ex.getRequestMethod();
     }
     
-    private final String handle(HttpExchange ex, List<MultiPart> parts) throws IOException{
-        System.out.println("No Parts: " + (parts == null));
+    private RequestType handle(HttpExchange ex, List<MultiPart> parts) throws IOException{
         if(parts != null) System.out.println("Parts Length: " + (parts.size()));
         if(parts == null){
             BufferedReader reader = new BufferedReader(new InputStreamReader(ex.getRequestBody()));
             StringBuilder builder = new StringBuilder();
-            String line = "";
+            String line;
             while((line = reader.readLine()) != null) builder.append(line).append("\n");
             this.requestBody = builder.toString();
+            
+            return RequestType.VIEW;
         } else {
             for(MultiPart part : parts){
-                data.put(part.name, part.bytes);
-                System.out.println("Set Name: " + part.name);
-                System.out.println("Set Data: " + part.value);
-                System.out.println("");
+                data.put(part.name, part);
             }
+            this.requestBody = "";
+            
+            return RequestType.UPLOAD;
         }
-        
-        return "";
+    }
+    
+    public MultiPart getData(String name){
+        return (MultiPart) data.get(name);
     }
     
     public static byte[] getInputAsBinary(InputStream requestStream) {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         try {
             byte[] buf = new byte[100000];
-            int bytesRead=0;
+            int bytesRead;
             while ((bytesRead = requestStream.read(buf)) != -1){
                 //while (requestStream.available() > 0) {
                 //    int i = requestStream.read(buf);
@@ -233,5 +238,10 @@ public class CDNRequest {
     
     public enum PartType{
         TEXT, FILE
+    }
+    
+    public enum RequestType{
+        VIEW,
+        UPLOAD
     }
 }
