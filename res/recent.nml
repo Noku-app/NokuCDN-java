@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>NokuCDN</title>
+  <link rel="stylesheet" href="noku.css">
+</head>
+<body>
+  <div class="header">
+  <!-- Import:header.nml -->
+  </div>
+  <div class="content">
+    <div class="column">
+    <!-- Import:column.nml -->
+    </div>
+	<div class="main">
+      <h1>Recent Postings</h1>
+	  {table}
+    </div>
+  </div>
+  <div class="footer">
+  <!-- Import:footer.nml -->
+  </div>
+</body>
+</html>

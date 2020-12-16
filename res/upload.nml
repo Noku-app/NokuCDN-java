@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>NokuCDN</title>
+  <link rel="stylesheet" href="noku.css">
+</head>
+<body>
+  <div class="header">
+  <!-- Import:header.nml -->
+  </div>
+  <div class="content">
+    <div class="column">
+    <!-- Import:column.nml -->
+    </div>
+	<div class="main">
+      <form method="post" action="post" enctype="multipart/form-data" class="form">
+	    <div class="form-header">
+		  <h1>Upload File</h1>
+		</div>
+        <div class="row clearfix">
+          <label for="file-button" class="float-left">Select to Upload:</label>
+		  
+          <label for="file" id="file-button" class="file-button float-right">
+            <input type="file" name="file" id="file">
+            Choose
+      	  </label>
+        </div>
+        <div class="row clearfix">
+          <label for="uid" class="float-left">User ID:</label>
+          <input type="number" name="uid" id="uid" class="float-right">
+        </div>
+        <div class="row clearfix">
+		  <label class="float-left">Options</label>
+		  <div class="float-right">
+            <input type="checkbox" name="original" id="original">
+            <label for="original" class="checkbox-label">Keep Original Image</label>
+		  </div>
+        </div>
+        <div class="row">
+          <button type="submit" class="block-button">Upload</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="footer">
+  <!-- Import:footer.nml -->
+  </div>
+</body>
+</html>
+
+<html lang="en">
+<head>
+  <title>NokuCDN-java</title>
+  <link rel="stylesheet" href="noku.css">
+</head>
+<body>
+
+</body>
+</html>

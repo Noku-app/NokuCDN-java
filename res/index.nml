@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>NokuCDN</title>
+  <link rel="stylesheet" href="noku.css">
+</head>
+<body>
+  <div class="header">
+  <!-- Import:header.nml -->
+  </div>
+  <div class="content">
+    <div class="column">
+    <!-- Import:column.nml -->
+    </div>
+	<div class="main">
+      <h1>What is a <u>CDN</u>, and what does it do?</h1>
+	  <p>
+	    A <u>C</u>ontent <u>D</u>elivery <u>N</u>etwork is a service that provides
+		content either as a module to a projects, or as a central server for many projects to
+		refrence from. Such of an example are <a href="https://bootstrap.com">BootStrap's</a>
+		CSS and JS files. When a browser detects that different sites link to the same source,
+		the browser can reuse the source since it already knows the contents it cached when a
+		different site accessed it earlier.
+	  </p>
+	  <h1>What is the purpose of this software?</h1>
+	  <p>
+	    This software enables you to manage the content served on your server with this CDN as
+		well as manage the CDN itself. With this software you can:
+		<ul>
+		  <li>- View recently uploaded content by user.</li>
+		  <li>- Directly insert a file into this CDN.<li>
+		  <li>- Update or even Remove content in this CDN.</li>
+		  <li>- Create additional users that can sign in and perform tasks.</li>
+		</ul>
+	  </p>
+	  <h1>Version and About</h1>
+	  <!-- Import:version.nml -->
+    </div>
+  </div>
+  <div class="footer">
+  <!-- Import:footer.nml -->
+  </div>
+</body>
+</html>
