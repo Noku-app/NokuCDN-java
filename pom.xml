@@ -3,16 +3,65 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
-    <groupId>groupId</groupId>
+    <groupId>com.noku</groupId>
     <artifactId>NokuCDN-java</artifactId>
-    <version>1.0-SNAPSHOT</version>
-
+    <version>1.0.0_BETA</version>
+    <packaging>jar</packaging>
+    <name>NokuCDN</name>
+    <organization>
+        <name>The Next Guy</name>
+        <url>http://xemplarsoft.com</url>
+    </organization>
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+
+    <build>
+        <sourceDirectory>src/main/java/com/noku</sourceDirectory>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <classpathPrefix>libs/</classpathPrefix>
+                            <mainClass>
+                                com.noku.cdn.javase.Main
+                            </mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <archive>
+                                <manifest>
+                                    <mainClass>
+                                        com.noku.cdn.javase.Main
+                                    </mainClass>
+                                </manifest>
+                            </archive>
+                            <descriptorRefs>
+                                <descriptorRef>jar-with-dependencies</descriptorRef>
+                            </descriptorRefs>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 
     <dependencies>
         <dependency>
@@ -21,14 +70,15 @@
             <version>0.0.1-PREALPHA</version>
         </dependency>
         <dependency>
-            <groupId>ws.schild</groupId>
-            <artifactId>jave-core</artifactId>
-            <version>3.0.0</version>
+            <groupId>com.kosprov.jargon2</groupId>
+            <artifactId>jargon2-api</artifactId>
+            <version>1.1.1</version>
         </dependency>
         <dependency>
-            <groupId>ws.schild</groupId>
-            <artifactId>jave-nativebin-win64</artifactId>
-            <version>3.0.0</version>
+            <groupId>com.kosprov.jargon2</groupId>
+            <artifactId>jargon2-native-ri-backend</artifactId>
+            <version>1.1.1</version>
+            <scope>runtime</scope>
         </dependency>
     </dependencies>
 </project>

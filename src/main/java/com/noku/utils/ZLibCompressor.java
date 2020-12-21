@@ -6,10 +6,10 @@ import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
-public class ZLibCompressor extends Compressor{
+public class ZLibCompressor implements Compressor{
     private static final ZLibCompressor instance = new ZLibCompressor();
     public byte[] compress(byte[] bytesToCompress) {
-        Deflater deflater = new Deflater();
+        Deflater deflater = new Deflater(Deflater.BEST_COMPRESSION, false);
         deflater.setInput(bytesToCompress);
         deflater.finish();
         

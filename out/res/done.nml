@@ -1,0 +1,9 @@
+<html lang="en">
+<head>
+<title>NokuCDN-java</title>
+</head>
+<body>
+<h1>Upload {title}</h1>
+<p>{message}</p>
+</body>
+</html>

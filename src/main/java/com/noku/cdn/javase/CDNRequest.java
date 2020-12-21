@@ -1,5 +1,6 @@
 package com.noku.cdn.javase;
 
+import com.noku.cdn.javase.json.JSONUtils;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 
@@ -13,97 +14,112 @@ public class CDNRequest {
     public final HttpExchange ex;
     public final RequestType type;
     private String requestBody;
+    private Map<String, Object> json;
     
     public CDNRequest(HttpExchange ex) throws IOException {
         this.ex = ex;
-        
-        Headers headers = ex.getRequestHeaders();
-        
-        if(headers.containsKey("Content-type")) {
-            String contentType = headers.getFirst("Content-type");
-            if(contentType.contains("multipart/form-data")) {
-                //found form data
-                String boundary = contentType.substring(contentType.indexOf("boundary=") + 9);
-                // as of rfc7578 - prepend "\r\n--"
-                byte[] boundaryBytes = ("\r\n--" + boundary).getBytes(StandardCharsets.UTF_8);
-                byte[] payload = getInputAsBinary(ex.getRequestBody());
-                System.out.println(new String(payload, StandardCharsets.UTF_8));
-                ArrayList<MultiPart> list = new ArrayList<>();
-                
-                List<Integer> offsets = searchBytes(payload, boundaryBytes, 0, payload.length - 1);
-                System.out.println("Offsets: " + offsets.size());
-                for(int idx = 0; idx < offsets.size(); idx++) {
-                    int startPart = offsets.get(idx);
-                    int endPart = payload.length;
-                    if(idx < offsets.size() - 1) {
-                        endPart = offsets.get(idx + 1);
-                    }
-                    byte[] part = Arrays.copyOfRange(payload, startPart, endPart);
-                    //look for header
-                    int headerEnd = indexOf(part, "\r\n\r\n".getBytes(StandardCharsets.UTF_8), 0, part.length - 1);
-                    if(headerEnd > 0) {
-                        MultiPart p = new MultiPart();
-                        byte[] head = Arrays.copyOfRange(part, 0, headerEnd);
-                        String header = new String(head);
-                        // extract name from header
-                        int nameIndex = header.indexOf("\r\nContent-Disposition: form-data; name=");
-                        if(nameIndex >= 0) {
-                            int startMarker = nameIndex + 39;
-                            //check for extra filename field
-                            int fileNameStart = header.indexOf("; filename=");
-                            if(fileNameStart >= 0) {
-                                String filename = header.substring(fileNameStart + 11, header.indexOf("\r\n", fileNameStart));
-                                p.filename = filename.replace('"', ' ').replace('\'', ' ').trim();
-                                p.name = header.substring(startMarker, fileNameStart).replace('"', ' ').replace('\'', ' ').trim();
-                                p.type = PartType.FILE;
-                            } else {
-                                int endMarker = header.indexOf("\r\n", startMarker);
-                                if(endMarker == -1)
-                                    endMarker = header.length();
-                                p.name = header.substring(startMarker, endMarker).replace('"', ' ').replace('\'', ' ').trim();
-                                p.type = PartType.TEXT;
-                            }
-                        } else {
-                            // skip entry if no name is found
-                            continue;
-                        }
-                        // extract content type from header
-                        int typeIndex = header.indexOf("\r\nContent-Type:");
-                        if(typeIndex >= 0) {
-                            int startMarker = typeIndex + 15;
-                            int endMarker = header.indexOf("\r\n", startMarker);
-                            if(endMarker == -1)
-                                endMarker = header.length();
-                            p.contentType = header.substring(startMarker, endMarker).trim();
-                        }
-                        
-                        //handle content
-                        if(p.type == PartType.TEXT) {
-                            //extract text value
-                            byte[] body = Arrays.copyOfRange(part, headerEnd + 4, part.length);
-                            p.value = new String(body);
-                            p.bytes = body;
-                        } else {
-                            //must be a file upload
-                            p.bytes = Arrays.copyOfRange(part, headerEnd + 4, part.length);
-                        }
-                        list.add(p);
-                    }
-                }
-                
-                this.type = handle(ex, list);
-            } else {
-                this.type = handle(ex, null);
-            }
-        } else {
-            this.type = handle(ex, null);
-        }
-        
+    
         String temp = ex.getRequestURI().toString();
         if(temp.startsWith("/")) temp = temp.substring(1);
-        
+    
         this.url = temp;
         this.method = ex.getRequestMethod();
+        
+        Headers headers = ex.getRequestHeaders();
+        String contentType = headers.getFirst("Content-type");
+    
+        RequestType type;
+        if(!headers.containsKey("Content-type")) type = handle(ex, null);
+        else if(contentType.contains("multipart/form-data")) type = setupFormData(contentType);
+        else if(contentType.contains("text/json")) type = setupJson();
+        else type = handle(ex, null);
+        
+        this.type = type;
+    }
+    
+    private RequestType setupFormData(String contentType) throws IOException{
+        //found form data
+        String boundary = contentType.substring(contentType.indexOf("boundary=") + 9);
+        // as of rfc7578 - prepend "\r\n--"
+        byte[] boundaryBytes = ("\r\n--" + boundary).getBytes(StandardCharsets.UTF_8);
+        byte[] payload = getInputAsBinary(ex.getRequestBody());
+        ArrayList<MultiPart> list = new ArrayList<>();
+    
+        List<Integer> offsets = searchBytes(payload, boundaryBytes, 0, payload.length - 1);
+        System.out.println("Offsets: " + offsets.size());
+        for(int idx = 0; idx < offsets.size(); idx++) {
+            int startPart = offsets.get(idx);
+            int endPart = payload.length;
+            if(idx < offsets.size() - 1) {
+                endPart = offsets.get(idx + 1);
+            }
+            byte[] part = Arrays.copyOfRange(payload, startPart, endPart);
+            //look for header
+            int headerEnd = indexOf(part, "\r\n\r\n".getBytes(StandardCharsets.UTF_8), 0, part.length - 1);
+            if(headerEnd > 0) {
+                MultiPart p = new MultiPart();
+                byte[] head = Arrays.copyOfRange(part, 0, headerEnd);
+                String header = new String(head);
+                // extract name from header
+                int nameIndex = header.indexOf("\r\nContent-Disposition: form-data; name=");
+                if(nameIndex >= 0) {
+                    int startMarker = nameIndex + 39;
+                    //check for extra filename field
+                    int fileNameStart = header.indexOf("; filename=");
+                    if(fileNameStart >= 0) {
+                        String filename = header.substring(fileNameStart + 11, header.indexOf("\r\n", fileNameStart));
+                        p.filename = filename.replace('"', ' ').replace('\'', ' ').trim();
+                        p.name = header.substring(startMarker, fileNameStart).replace('"', ' ').replace('\'', ' ').trim();
+                        p.type = PartType.FILE;
+                    } else {
+                        int endMarker = header.indexOf("\r\n", startMarker);
+                        if(endMarker == -1)
+                            endMarker = header.length();
+                        p.name = header.substring(startMarker, endMarker).replace('"', ' ').replace('\'', ' ').trim();
+                        p.type = PartType.TEXT;
+                    }
+                } else {
+                    // skip entry if no name is found
+                    continue;
+                }
+                // extract content type from header
+                int typeIndex = header.indexOf("\r\nContent-Type:");
+                if(typeIndex >= 0) {
+                    int startMarker = typeIndex + 15;
+                    int endMarker = header.indexOf("\r\n", startMarker);
+                    if(endMarker == -1)
+                        endMarker = header.length();
+                    p.contentType = header.substring(startMarker, endMarker).trim();
+                }
+            
+                //handle content
+                if(p.type == PartType.TEXT) {
+                    //extract text value
+                    byte[] body = Arrays.copyOfRange(part, headerEnd + 4, part.length);
+                    p.value = new String(body);
+                    p.bytes = body;
+                } else {
+                    //must be a file upload
+                    p.bytes = Arrays.copyOfRange(part, headerEnd + 4, part.length);
+                }
+                list.add(p);
+            }
+        }
+        
+        return handle(ex, list);
+    }
+    private RequestType setupJson() throws IOException{
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        InputStream body = ex.getRequestBody();
+        int i;
+        while((i = body.read()) != -1) out.write((byte)(i & 0xFF));
+        body.close();
+        byte[] data = out.toByteArray();
+        String json = new String(data, StandardCharsets.UTF_8).trim();
+        
+        this.json = JSONUtils.parse(json, 0);
+        
+        return RequestType.JSON;
     }
     
     private RequestType handle(HttpExchange ex, List<MultiPart> parts) throws IOException{
@@ -219,6 +235,10 @@ public class CDNRequest {
         return method;
     }
     
+    public Map<String, Object> getJson(){
+        return json;
+    }
+    
     public HttpExchange getEx(){
         return ex;
     }
@@ -242,6 +262,7 @@ public class CDNRequest {
     
     public enum RequestType{
         VIEW,
-        UPLOAD
+        UPLOAD,
+        JSON
     }
 }

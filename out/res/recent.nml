@@ -13,12 +13,8 @@
     <!-- Import:column.nml -->
     </div>
 	<div class="main">
-      <h1>An error has occured.</h1>
-	  <p>
-	    Some sort of error occured fam, your meme was trash boi.
-	  </p>
-	  <h1>Version</h1>
-	  <!-- Import:version.nml -->
+      <h1>Recent Postings</h1>
+	  {table}
     </div>
   </div>
   <div class="footer">

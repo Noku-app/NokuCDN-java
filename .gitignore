@@ -8,9 +8,13 @@
 *.war
 *.ear
 
-# DB Credentials #
+# Sensitives #
 /res/db.properties
 /res/monospace.ttf
+/res/auth_hash.argon
+/res/test
+/res/lig.keystore
+/res/auth_token.bin
 
 # Maven #
 /target
@@ -27,6 +31,7 @@ buildNumber.properties
 ### Gradle ###
 /.gradle/
 /build/
+/releases/
 
 # Ignore Gradle GUI config
 gradle-app.setting

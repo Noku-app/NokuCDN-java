@@ -1,0 +1,7 @@
+<div class="clearfix header-content">
+  <img src="/EFA74DE5477FAE7F0C56E43481B100A41DA82C18DC8C78D0B3996D116D970556" alt="Noku" class="float-left header-image">
+  <div class="float-right">
+    <h1> NokuCDN</h1>
+    <p>Storage Engine for NokuApp's Content</p>
+  </div>
+</div>
