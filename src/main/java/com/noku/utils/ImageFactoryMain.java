@@ -25,8 +25,6 @@ public class ImageFactoryMain {
               47,   87,  -56,   71,  -87,   17,   18,   -2,   34,  110,   17,   84,  -46,  -17,  -24,   15
         };
         System.out.println(SHA256.bytesToHex(pass));
-        // 7FBBEA445292E038444EE5385E202808FF135747514004E3A944563C564B36BBA907F4183911A97D802F22BF3A2FD43A2F57C847A91112FE226E1154D2EFE80F
-        // 7FBBEA445292E038444EE5385E202808FF135747514004E3A944563C564B36BBA907F4183911A97D802F22BF3A2FD43A2F57C847A91112FE226E1154D2EFE80F
         Jargon2.Hasher hasher = jargon2Hasher()
         .type(Jargon2.Type.ARGON2d) // Data-dependent hashing
         .memoryCost(65536)  // 64MB memory cost

@@ -308,6 +308,7 @@ public final class CDNServer implements Runnable{
         ex.getResponseHeaders().add("Cache-Control", "max-age=86400");
         ex.getResponseHeaders().add("Expires", instant.toString());
         ex.getResponseHeaders().add("Content-Type", set.getString("mime_type"));
+        ex.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
         BufferedReader reader = new BufferedReader(set.getCharacterStream("data"));
     
         ByteArrayOutputStream baos = new ByteArrayOutputStream();

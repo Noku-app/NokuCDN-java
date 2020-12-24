@@ -15,6 +15,7 @@
 /res/test
 /res/lig.keystore
 /res/auth_token.bin
+/out/
 
 # Maven #
 /target
@@ -48,3 +49,4 @@ gradle-app.setting
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 /src/main/java/com/noku/hpp/HPPMain.java
+/ContentProcessor/src/main/java/com/noku/contentpro/ContentMain.java

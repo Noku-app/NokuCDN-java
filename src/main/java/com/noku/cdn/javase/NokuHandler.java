@@ -15,6 +15,7 @@ public class NokuHandler implements HttpHandler {
     
     public void handle(HttpExchange ex) throws IOException {
         printRequestInfo(ex);
+        ex.getResponseHeaders().add("connection", "keep-alive");
         queue.addRequest(new CDNRequest(ex));
     }
     

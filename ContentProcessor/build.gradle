@@ -1,0 +1,16 @@
+plugins {
+    id 'java'
+}
+
+group 'com.noku'
+version '0.0.1_PRE_ALPHA'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    implementation group: 'ws.schild', name: 'jave-core', version: '3.0.0'
+    implementation group: 'ws.schild', name: 'jave-nativebin-win64', version: '3.0.0'
+}
